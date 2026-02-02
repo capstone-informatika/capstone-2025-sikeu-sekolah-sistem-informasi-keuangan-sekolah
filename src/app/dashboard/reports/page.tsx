@@ -115,7 +115,7 @@ export default function ReportsPage() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>("")
   
   // Filter states
-  const [dateRange, setDateRange] = useState("bulan-ini")
+  const [dateRange, setDateRange] = useState("6-bulan-terakhir")
   const [filterType, setFilterType] = useState("semua")
   const [filterCategory, setFilterCategory] = useState("semua")
   const [filterMethod, setFilterMethod] = useState("semua")
@@ -154,6 +154,13 @@ export default function ReportsPage() {
     fetchSchools()
   }, [session, status, router])
 
+  // Refetch data when dateRange changes
+  useEffect(() => {
+    if (session) {
+      fetchReportData()
+    }
+  }, [dateRange])
+
   const fetchSchools = async () => {
     try {
       const response = await fetch('/api/schools', { cache: 'no-store' })
@@ -191,10 +198,13 @@ export default function ReportsPage() {
         'minggu-ini': 'thisWeek',
         'bulan-ini': 'thisMonth',
         'bulan-lalu': 'lastMonth',
-        'tahun-ini': 'thisYear'
+        '3-bulan-terakhir': 'last3Months',
+        '6-bulan-terakhir': 'last6Months',
+        'tahun-ini': 'thisYear',
+        'semua-data': 'allTime'
       }
       
-      const period = periodMap[dateRange] || 'thisMonth'
+      const period = periodMap[dateRange] || 'last6Months'
       const url = `/api/reports?period=${period}&_t=${Date.now()}`
       
       console.log("📊 Fetching report data:", url)
@@ -949,9 +959,12 @@ export default function ReportsPage() {
                   <SelectContent>
                     <SelectItem value="hari-ini">Hari Ini</SelectItem>
                     <SelectItem value="minggu-ini">Minggu Ini</SelectItem>
-                    <SelectItem value="bulan-ini">Bulan Ini: 01/12/2025 - 31/12/2025</SelectItem>
+                    <SelectItem value="bulan-ini">Bulan Ini</SelectItem>
                     <SelectItem value="bulan-lalu">Bulan Lalu</SelectItem>
+                    <SelectItem value="3-bulan-terakhir">3 Bulan Terakhir</SelectItem>
+                    <SelectItem value="6-bulan-terakhir">6 Bulan Terakhir</SelectItem>
                     <SelectItem value="tahun-ini">Tahun Ini</SelectItem>
+                    <SelectItem value="semua-data">Semua Data</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

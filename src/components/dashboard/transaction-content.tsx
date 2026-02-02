@@ -97,7 +97,7 @@ export function TransactionContent() {
   const [incomeCategories, setIncomeCategories] = useState<any[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterPeriod, setFilterPeriod] = useState("bulan-ini");
+  const [filterPeriod, setFilterPeriod] = useState("6-bulan-terakhir");
   const [filterPetugas, setFilterPetugas] = useState("semua");
   const [currentPage, setCurrentPage] = useState(1);
   const [schools, setSchools] = useState<any[]>([]);
@@ -188,7 +188,20 @@ export function TransactionContent() {
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/transactions`);
+      // Map filterPeriod to API period parameter
+      const periodMap: Record<string, string> = {
+        'hari-ini': 'today',
+        'minggu-ini': 'thisWeek',
+        'bulan-ini': 'thisMonth',
+        'bulan-lalu': 'lastMonth',
+        '3-bulan-terakhir': 'last3Months',
+        '6-bulan-terakhir': 'last6Months',
+        'tahun-ini': 'thisYear',
+        'semua-data': 'allTime'
+      };
+      
+      const period = periodMap[filterPeriod] || 'last6Months';
+      const response = await fetch(`/api/transactions?period=${period}`);
       if (response.ok) {
         const data = await response.json();
         setTransactions(data.transactions || []);
@@ -200,7 +213,7 @@ export function TransactionContent() {
       console.error("Failed to fetch transactions:", error);
       setTransactions([]);
     }
-  }, []);
+  }, [filterPeriod]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -282,6 +295,13 @@ export function TransactionContent() {
       }));
     }
   }, [activeTab, mounted, initialLoading]);
+
+  // Refetch data when filterPeriod changes
+  useEffect(() => {
+    if (mounted && !initialLoading) {
+      fetchTransactions();
+    }
+  }, [filterPeriod, mounted, initialLoading, fetchTransactions]);
   
   // Separate effect for periodic refresh
   useEffect(() => {
@@ -828,6 +848,22 @@ export function TransactionContent() {
                 className="pl-10 w-full sm:w-64"
               />
             </div>
+            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                <SelectValue placeholder="Pilih Periode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hari-ini">Hari Ini</SelectItem>
+                <SelectItem value="minggu-ini">Minggu Ini</SelectItem>
+                <SelectItem value="bulan-ini">Bulan Ini</SelectItem>
+                <SelectItem value="bulan-lalu">Bulan Lalu</SelectItem>
+                <SelectItem value="3-bulan-terakhir">3 Bulan Terakhir</SelectItem>
+                <SelectItem value="6-bulan-terakhir">6 Bulan Terakhir</SelectItem>
+                <SelectItem value="tahun-ini">Tahun Ini</SelectItem>
+                <SelectItem value="semua-data">Semua Data</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={filterPetugas} onValueChange={setFilterPetugas}>
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue />

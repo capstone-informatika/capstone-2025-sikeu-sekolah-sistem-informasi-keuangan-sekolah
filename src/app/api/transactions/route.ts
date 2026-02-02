@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const search = searchParams.get('search')
     const month = searchParams.get('month')
+    const period = searchParams.get('period')
 
     // CRITICAL FIX: Handle case where schoolId might be null/undefined
     let schoolId: string | null = session.user.schoolId || null
@@ -116,7 +117,56 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (month) {
+    // Handle period parameter for date filtering
+    if (period && !month) {
+      const now = new Date()
+      let startDate: Date
+      let endDate: Date = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      
+      switch (period) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+          break
+        case 'thisWeek':
+          const dayOfWeek = now.getDay()
+          startDate = new Date(now)
+          startDate.setDate(now.getDate() - dayOfWeek)
+          startDate.setHours(0, 0, 0, 0)
+          break
+        case 'thisMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          break
+        case 'lastMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+          break
+        case 'last3Months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+          break
+        case 'last6Months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+          break
+        case 'thisYear':
+          startDate = new Date(now.getFullYear(), 0, 1)
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+          break
+        case 'allTime':
+          startDate = new Date(2020, 0, 1)
+          break
+        default:
+          // Default to last 6 months
+          startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+      }
+      
+      // Don't override TREASURER restrictions
+      if (session.user.role !== 'TREASURER') {
+        where.date = {
+          gte: startDate,
+          lte: endDate,
+        }
+      }
+    } else if (month) {
       const startDate = new Date(`${month}-01`)
       const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0)
       where.date = {

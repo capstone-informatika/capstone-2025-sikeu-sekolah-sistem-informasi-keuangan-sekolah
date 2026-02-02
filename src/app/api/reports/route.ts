@@ -123,36 +123,53 @@ export async function GET(request: NextRequest) {
       startDate = roleBasedDateRange.startDate
       endDate = roleBasedDateRange.endDate
     } else {
+      const now = new Date()
       switch (period) {
         case 'today':
-          startDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-          endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999)
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
           break
         case 'thisWeek':
-          const dayOfWeek = endDate.getDay()
-          startDate = new Date(endDate)
-          startDate.setDate(endDate.getDate() - dayOfWeek)
+          const dayOfWeek = now.getDay()
+          startDate = new Date(now)
+          startDate.setDate(now.getDate() - dayOfWeek)
           startDate.setHours(0, 0, 0, 0)
+          endDate = new Date(now)
+          endDate.setHours(23, 59, 59, 999)
           break
         case 'thisMonth':
-          startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-          endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0, 23, 59, 59, 999)
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
           break
         case 'lastMonth':
-          startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1)
-          endDate = new Date(endDate.getFullYear(), endDate.getMonth(), 0, 23, 59, 59, 999)
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+          break
+        case 'last3Months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+          break
+        case 'last6Months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
           break
         case 'thisYear':
-          startDate = new Date(endDate.getFullYear(), 0, 1)
-          endDate = new Date(endDate.getFullYear(), 11, 31, 23, 59, 59, 999)
+          startDate = new Date(now.getFullYear(), 0, 1)
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
           break
         case 'lastYear':
-          startDate = new Date(endDate.getFullYear() - 1, 0, 1)
-          endDate = new Date(endDate.getFullYear() - 1, 11, 31, 23, 59, 59, 999)
+          startDate = new Date(now.getFullYear() - 1, 0, 1)
+          endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999)
+          break
+        case 'allTime':
+          // Set to a very old date to get all data
+          startDate = new Date(2020, 0, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
           break
         default:
-          startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-          endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0, 23, 59, 59, 999)
+          // Default to last 6 months
+          startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
       }
     }
 
